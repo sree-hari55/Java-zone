@@ -1,0 +1,103 @@
+1) Create models class like ex:(User,Post etc)
+
+2) Create Repository
+
+3) Create Registration request and store user data into db
+
+4) Implement basic Security in
+     @Override
+	protected void configure(HttpSecurity http) throws Exception {
+		http
+		.csrf()
+		.disable();
+		http
+		.authorizeRequests()
+		.antMatchers("/api/auth/**","/h2-console/**")
+		.permitAll()
+		.anyRequest()
+		.authenticated();
+	}
+	
+5) Create login request 
+
+6) Implement UserDetailsService 
+
+7) Use UserDetailsService  and PasswordEncoder in 
+      @Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth
+		.userDetailsService(userDetailsService)
+		.passwordEncoder(passwordEncoder());
+	}
+
+8) Use AuthenticationManager to validate user is login or not in service
+
+9) Store these User object into SpringSecurity Context
+
+10) If Login Is Sucess then Generate JWT token to current login User 
+
+11) Generating jwt token by using defalut key.
+
+	private Key key;
+
+	  @PostConstruct
+	  public void init() {
+		  key=Keys.secretKeyFor(SignatureAlgorithm.HS512);
+	  }
+	public String generateToken(Authentication authentication) {
+		 User principal=(User)authentication.getPrincipal();
+		  return Jwts.builder()
+	                .setSubject(principal.getUsername())
+	                .signWith(key)
+	                .compact();
+	}
+	
+	
+12) Generating jwt token by using jks file key.
+	private KeyStore keyStore;
+
+	    @PostConstruct
+	    public void init() {
+	        try {
+	            keyStore = KeyStore.getInstance("JKS");
+	            InputStream resourceAsStream = getClass().getResourceAsStream("/springblog.jks");
+	            keyStore.load(resourceAsStream, "secret".toCharArray());
+	        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
+	            throw new SpringBlogException("Exception occured while loading keystore");
+	        }
+
+	    }
+
+	    public String generateToken(Authentication authentication) {
+	        User principal = (User) authentication.getPrincipal();
+	        return Jwts.builder()
+	                .setSubject(principal.getUsername())
+	                .signWith(getPrivateKey())
+	                .compact();
+	    }
+
+	    private PrivateKey getPrivateKey() {
+	        try {
+	            return (PrivateKey) keyStore.getKey("springblog", "secret".toCharArray());
+	        } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
+	            throw new SpringBlogException("Exception occured while retrieving public key from keystore");
+	        }
+	    }
+	    
+	     private PublicKey getPublickey() {
+	        try {
+	            return keyStore.getCertificate("springblog").getPublicKey();
+	        } catch (KeyStoreException e) {
+	            throw new SpringBlogException("Exception occured while retrieving public key from keystore");
+	        }
+	    }
+	    
+
+11) Taking Jwt token from header in JWtAuthenticationFilter
+
+12) validate The Token
+    
+    public boolean validateJWTToken(String token){
+		Jwts.parser().setSigningKey(key).parseClaimsJws(token);
+		return true;
+	}
