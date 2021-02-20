@@ -1,0 +1,20 @@
+<div class="header">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h1><a href="" class="title">java-zone</a></h1> <!-- title -->
+            </div> 
+            <!-- *ngIf='authService.isAuthenticated()' -->
+            <div class="col-md-4"  *ngIf="authService.isAuthenticated()"> 
+                <button type="submit" class="logout btn btn-default" (click)="logout()">logout</button>
+                <h1><a href="/add-post" class="add-post btn btn-default">add-post</a></h1>
+            </div>
+            <div class="col-md-6" *ngIf="!authService.isAuthenticated()" >
+                <a href="/aboutus" class="about btn btn-default">about us</a> 
+                <a href="/login" class="login btn btn-default">Login</a>     <!-- login -->
+                <a href="/register" class="register btn btn-default">Register</a> <!-- Register -->
+            </div>
+        </div>
+    </div>
+    
+</div>

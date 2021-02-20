@@ -1,0 +1,157 @@
+requirement :
+-------------
+
+1  first chk whether OU is present in mattermost elsse need to create team
+
+2) then under tht team need to chk whether channel is present in mattermost else need to create the channel
+
+3) then need to chk user and create user if not exists
+
+4) and then need to map the user to tht channel
+
+
+//create bulk users
+
+	public void createUser(List<UserDto> users) throws NamingException, NoSuchAlgorithmException, UnsupportedEncodingException{       
+
+		DirContext connectionContext = null;        
+
+		try {
+			connectionContext = new InitialDirContext(connectionProperties);
+			logger.info("LDAP Connection context created...");
+		
+
+			Attributes attributes =new BasicAttributes();
+			Attribute objectClass =new BasicAttribute("objectClass");
+			objectClass.add("inetOrgPerson");
+			objectClass.add("posixAccount");
+			objectClass.add("top");
+			attributes.put(objectClass);
+
+			String gidNumber = "";
+
+			String roleType="";
+			String orgUnitLocation ="";
+			String orgUnitLatitude = "";
+			String orgUnitLongitude = ""; 
+
+			boolean hasOUAccess = false;
+			boolean hasUniversalAccess = false;
+
+			for(UserDto userDto:users) {
+				String description = "";
+
+				String orgName=serachOranizationUint(userDto.getOrganizationUnitName());
+				logger.info("orgName : "+orgName);
+				
+				List<Role> roleList=new ArrayList<Role>();
+				List<User> userList=new ArrayList<User>(); 
+				List<String> roles = new ArrayList<String>();
+				List<Tab> tabList=new ArrayList<Tab>();
+				String teamId = searchOrganization(orgName);
+				if(teamId!=null && !teamId.isEmpty()) {
+					roleList=getRoles(orgName);
+						if(roleList.size() > 0) {
+							for(Role role:roleList) {
+								if(role.getRoleName().contains(userDto.getRole())) {
+									userList=getUsers(orgName);
+									for(User usr:userList) {
+										roles = usr.getRoleList();
+										if(usr.getUsername().contains(userDto.getUsername())) {
+											if(roles.contains(userDto.getRole())) {
+												tabList=getTabs(orgName);
+												for(Tab tab : tabList) {
+													if(tab.getTabName().contains(userDto.getChannelName())) {
+														logger.error("User Exist"+userDto.getUsername());
+													}else {
+														TabDto tabDto=new TabDto();
+														tabDto.setChannelName(userDto.getChannelName());
+														tabDto.setHeader(userDto.getChannelName());
+														tabDto.setPurpose(userDto.getChannelName());
+														tabDto.setOrganizationUnitName(userDto.getOrganizationUnitName());
+														tabDto.setDepartmentName(userDto.getDepartment());
+														tabDto.setRole(userDto.getRole());
+														tabDto.setAccessAcrossUnits(false);
+														tabDto.setAccessAcrossDepartments(false);
+														createTab(tabDto);
+														//String channelId_MM=searchTab(userDto.getChannelName());
+														//String resp=mmServiceManager.addUser2Channel(tab.getChannelId_MM(), mm_user_id);
+														//logger.error("user has been assigned to channel "+resp);
+													}
+												}
+											}else {
+												addRoles4User(orgName,userDto.getUsername(),userDto.getRole());
+											}
+										}else {
+											
+											createUser(userDto.getFirstName(),userDto.getLastName(),userDto.getUsername(),userDto.getPassword(),userDto.getEmail()
+													,userDto.getQualification(),userDto.getSpecialization(),userDto.getEmployeeId(),userDto.getAadhaarNumber()
+													,userDto.getPanNumber(),userDto.getPassportNumber(),userDto.getPhoneNumber(),orgName,userDto.getOrganizationUnitName(),
+													userDto.getDepartment(),userDto.getGender(),String.valueOf(hasOUAccess),String.valueOf(hasOUAccess));
+										}
+									}
+								}else {
+									createRole(userDto.getRole(),roleType,orgName,String.valueOf(hasOUAccess),userDto.getOrganizationUnitName(),userDto.getDepartment()); 
+									TabDto tabDto=new TabDto();
+									tabDto.setChannelName(userDto.getChannelName());
+									tabDto.setHeader(userDto.getChannelName());
+									tabDto.setPurpose(userDto.getChannelName());
+									tabDto.setOrganizationUnitName(userDto.getOrganizationUnitName());
+									tabDto.setDepartmentName(userDto.getDepartment());
+									tabDto.setRole(userDto.getRole());
+									tabDto.setAccessAcrossUnits(false);
+									tabDto.setAccessAcrossDepartments(false);
+									createTab(tabDto);
+									createUser(userDto.getFirstName(),userDto.getLastName(),userDto.getUsername(),userDto.getPassword(),userDto.getEmail()
+											,userDto.getQualification(),userDto.getSpecialization(),userDto.getEmployeeId(),userDto.getAadhaarNumber()
+											,userDto.getPanNumber(),userDto.getPassportNumber(),userDto.getPhoneNumber(),orgName,userDto.getOrganizationUnitName(),
+											userDto.getDepartment(),userDto.getGender(),String.valueOf(hasOUAccess),String.valueOf(hasOUAccess));
+								}
+							}
+						}
+				}else {
+					
+					createOrganization(orgName,userDto.getEmail(),userDto.getPhoneNumber());
+					createOrganizationUnit(userDto.getOrganizationUnitName(),orgName,orgUnitLocation,orgUnitLatitude,orgUnitLongitude,userDto.getPhoneNumber());
+					createDepartment(userDto.getDepartment(),userDto.getOrganizationUnitName(),orgName );
+					createRole(userDto.getRole(),roleType,orgName,String.valueOf(hasOUAccess),userDto.getOrganizationUnitName(),userDto.getDepartment()); 
+					TabDto tabDto=new TabDto();
+					tabDto.setChannelName(userDto.getChannelName());
+					tabDto.setHeader(userDto.getChannelName());
+					tabDto.setPurpose(userDto.getChannelName());
+					tabDto.setOrganizationUnitName(userDto.getOrganizationUnitName());
+					tabDto.setDepartmentName(userDto.getDepartment());
+					tabDto.setRole(userDto.getRole());
+					tabDto.setAccessAcrossUnits(false);
+					tabDto.setAccessAcrossDepartments(false);
+					createTab(tabDto);
+					createUser(userDto.getFirstName(),userDto.getLastName(),userDto.getUsername(),userDto.getPassword(),userDto.getEmail()
+							,userDto.getQualification(),userDto.getSpecialization(),userDto.getEmployeeId(),userDto.getAadhaarNumber()
+							,userDto.getPanNumber(),userDto.getPassportNumber(),userDto.getPhoneNumber(),orgName,userDto.getOrganizationUnitName(),
+							userDto.getDepartment(),userDto.getGender(),String.valueOf(hasOUAccess),String.valueOf(hasOUAccess));
+
+				}
+			}
+		}
+		catch (AuthenticationNotSupportedException ex) {
+			logger.error("The authentication is not supported by the server", ex);
+		} catch (AuthenticationException ex) {
+			logger.error("Invalid password or username", ex);
+		}
+		catch(NamingException ne) {
+			logger.error("Authentication and Bind Failed!", ne);
+		}
+		catch(Exception e) {
+			logger.error("Error Occurred!", e);
+		}
+		finally {
+			if (connectionContext != null) {
+				try {   
+					connectionContext.close();
+				}
+				catch (NamingException ne) { 
+					logger.error("Error Occurred while closing the connection!", ne); 
+				}
+			}
+		}
+	}

@@ -1,0 +1,16 @@
+<div class="content">
+    <div class="container">
+      <div class="row">
+      <!--<div class="col-md-1"></div>-->
+        <div class="col-md-8">
+          <h1 class="blog-title">{{ post?.title }}</h1>
+         <span>
+              <p>by &nbsp;{{ post?.userName }}</p>
+          </span>
+          <hr class="mt-2 mb-3">
+          <p [innerHTML]="post?.content"></p>
+          <hr class="mt-2 mb-3"> 
+        </div>
+      </div>
+    </div>
+  </div>
